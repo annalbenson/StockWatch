@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">StockWatch</string>
+    <string name="add">addStockMenuTitle</string>
+    <string name="title_bar">Stock Watch</string>
+</resources>
