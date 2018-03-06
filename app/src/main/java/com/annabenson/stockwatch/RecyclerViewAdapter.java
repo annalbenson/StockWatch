@@ -1,5 +1,6 @@
 package com.annabenson.stockwatch;
 
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.text.Layout;
 import android.util.Log;
@@ -43,7 +44,22 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<MyViewHolder>{
         holder.name.setText(stock.getName());
         holder.symbol.setText(stock.getSymbol());
         holder.price.setText(String.format("%s",stock.getPrice()));
-        holder.change.setText(String.format("^ %.2f (%.2f)", stock.getChange(), stock.getPercent()));
+        holder.change.setText(String.format("%.2f (%.2f%%)", stock.getChange(), stock.getPercent()));
+        if(stock.getChange() >= 0){
+            // green
+            holder.name.setTextColor(Color.GREEN);
+            holder.symbol.setTextColor(Color.GREEN);
+            holder.price.setTextColor(Color.GREEN);
+            holder.change.setTextColor(Color.GREEN);
+
+        }
+        else{// < 0
+            // red
+            holder.name.setTextColor(Color.RED);
+            holder.symbol.setTextColor(Color.RED);
+            holder.price.setTextColor(Color.RED);
+            holder.change.setTextColor(Color.RED);
+        }
     }
 
     @Override

@@ -32,18 +32,25 @@ public class AsyncStockLoader extends AsyncTask<String,Integer,String> {
 
     @Override
     protected void onPreExecute(){
-        Toast.makeText(mainActivity, "Loading Stock Data...", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(mainActivity, "Loading Stock Data...", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     protected void onPostExecute(String s) {
         ArrayList<Stock> stocksList = parseJSON(s);
-        Stock x = stocksList.get(0);
-        String n = x.getName();
-        Log.d(TAG, "onPostExecute: loaded" + n);
-        Toast.makeText(mainActivity, "Loaded " + stocksList.size() + " stocks.", Toast.LENGTH_SHORT).show();
-        mainActivity.stockSelect(stocksList);
-        //mainActivity.updateData(stocksList);
+        if(stocksList.size() == 0){
+            // nothing founds, call not found in MA
+            mainActivity.notFoundDialog();
+        }
+        else {
+
+            //Stock x = stocksList.get(0);
+            //String n = x.getName();
+            //Log.d(TAG, "onPostExecute: loaded" + n);
+            //Toast.makeText(mainActivity, "Loaded " + stocksList.size() + " stocks.", Toast.LENGTH_SHORT).show();
+            mainActivity.stockSelect(stocksList);
+            //mainActivity.updateData(stocksList);
+        }
     }
 
     @Override

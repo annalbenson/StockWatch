@@ -24,6 +24,9 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import static android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS;
+import static android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS;
+
 public class MainActivity extends AppCompatActivity
         implements View.OnClickListener, View.OnLongClickListener {
 
@@ -53,7 +56,10 @@ public class MainActivity extends AppCompatActivity
         rV.setAdapter(rVAdapter);
         rV.setLayoutManager(new LinearLayoutManager(this));
 
+
         databaseHandler = new DatabaseHandler(this);
+        databaseHandler.deleteStock("CAIBX");
+        databaseHandler.deleteStock("CAIFX");
 
         // swipe to refresh
         //textView = (TextView) findViewById(R.id.textView);
@@ -65,8 +71,18 @@ public class MainActivity extends AppCompatActivity
         swiper.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                //textView.setText("Is this thing on? " + ! on );
-                on = ! on;
+
+                ArrayList<Stock> list = databaseHandler.loadStocks();
+                stocksList.clear();
+                for(int i = 0; i < list.size(); i ++){
+
+                    String symbol = list.get(i).getSymbol();
+                    String name = list.get(i).getName();
+                    new AsyncFinancialDataLoader(mainActivity).execute(symbol);
+                }
+
+                rVAdapter.notifyDataSetChanged();
+
                 swiper.setRefreshing(false);
             }
         });
@@ -100,11 +116,14 @@ public class MainActivity extends AppCompatActivity
 
         stocksList.clear();
 
+        //new AsyncFinancialDataLoader(mainActivity).execute("AMZN");
+
         for(int i = 0; i < list.size(); i ++){
 
             String symbol = list.get(i).getSymbol();
             String name = list.get(i).getName();
-            new AsyncFinancialDataLoader(mainActivity).execute(symbol,name);
+            new AsyncFinancialDataLoader(mainActivity).execute(symbol);
+            //stocksList.get(i).setName(name);
 
         }
 
@@ -119,15 +138,13 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
     }
 
-    protected void addNewStock(ArrayList<Stock> sList){
+    protected void addNewStock(Stock stock){
         // called by async fin data load
-
-        Stock stock = sList.get(0);
 
         // get name from dummy list in onResume maybe?
         //stock.setName();
         stocksList.add(stock);
-
+        rVAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -162,7 +179,8 @@ public class MainActivity extends AppCompatActivity
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         Log.d("addStockDialog", "addStockDialog called:");
         final EditText et = new EditText(this);
-        et.setInputType(InputType.TYPE_CLASS_TEXT);
+        et.setInputType(InputType.TYPE_CLASS_TEXT | TYPE_TEXT_FLAG_CAP_CHARACTERS );
+
         et.setGravity(Gravity.CENTER_HORIZONTAL);
 
         builder.setView(et);
@@ -189,14 +207,6 @@ public class MainActivity extends AppCompatActivity
                     new AsyncStockLoader(mainActivity).execute(sArr);
                 }
 
-
-                // Pop up list dialog
-
-                // user selects
-
-
-                // add code
-                //return;
             }
         });
         builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -220,6 +230,16 @@ public class MainActivity extends AppCompatActivity
         builder.setTitle("Duplicate Stock");
         // NEED: exclamation icon
         //builder.setIcon();
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    public void notFoundDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        //builder.setMessage("Data for stock symbol");
+        builder.setTitle("Stock Symbol Not Found");
+
 
         AlertDialog dialog = builder.create();
         dialog.show();
@@ -259,11 +279,13 @@ public class MainActivity extends AppCompatActivity
 
     }
 
+    /*
     public void getFinancialData(ArrayList<Stock> sList){
 
         String symbol = sList.get(0).getSymbol();
         new AsyncFinancialDataLoader(mainActivity).execute(symbol);
     }
+    */
 
     /*
     public void addFinancialData(ArrayList<Stock> sList){
@@ -346,9 +368,35 @@ public class MainActivity extends AppCompatActivity
             // refresh recyclerview
             ArrayList<Stock> list = databaseHandler.loadStocks();
             stocksList.clear();
-            stocksList.addAll(list);
+
+            if(list.size() != 0) {
+
+                for (int i = 0; i < list.size(); i++) {
+
+                    String symbol = list.get(i).getSymbol();
+
+
+                    new AsyncFinancialDataLoader(mainActivity).execute(symbol);
+                    //String name = list.get(i).getName();
+                    //stocksList.get(i).setName(name);
+                }
+            }
+            else{
+                String symbol = list.get(0).getSymbol();
+
+
+                new AsyncFinancialDataLoader(mainActivity).execute(symbol);
+            }
+
+
+            //stocksList.addAll(list);
             //stocksList.addAll(sList);
+
+
+
+
             rVAdapter.notifyDataSetChanged();
+
         }
 
     }

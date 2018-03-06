@@ -32,12 +32,12 @@ public class AsyncFinancialDataLoader extends AsyncTask<String,Integer,String> {
 
     @Override
     protected void onPreExecute(){
-        Toast.makeText(mainActivity, "Loading Financial Data...", Toast.LENGTH_SHORT).show();
+        //Toast.makeText(mainActivity, "Loading Financial Data...", Toast.LENGTH_SHORT).show();
     }
 
     @Override
     protected void onPostExecute(String s) {
-        ArrayList<Stock> stocksList = parseJSON(s);
+        Stock stock = parseJSON(s);
         //Stock x = stocksList.get(0);
         //String n = x.getName();
         //Log.d(TAG, "onPostExecute: loaded" + n);
@@ -45,7 +45,7 @@ public class AsyncFinancialDataLoader extends AsyncTask<String,Integer,String> {
         //mainActivity.stockSelect(stocksList);
         //mainActivity.updateData(stocksList);
 
-        mainActivity.addNewStock(stocksList);
+        mainActivity.addNewStock(stock);
         // call something to add new data to existing data
     }
 
@@ -84,7 +84,7 @@ public class AsyncFinancialDataLoader extends AsyncTask<String,Integer,String> {
         return sb.toString();
     }
 
-    private ArrayList<Stock> parseJSON(String s) {
+    private Stock parseJSON(String s) {
 
         Log.d(TAG, "parseJSON: started JSON");
 
@@ -102,7 +102,8 @@ public class AsyncFinancialDataLoader extends AsyncTask<String,Integer,String> {
             double price = Double.parseDouble (jStock.getString("latestPrice"));
             double change = Double.parseDouble (jStock.getString("change"));
             double percent = Double.parseDouble (jStock.getString("changePercent"));
-            stocksList.add(new Stock("", symbol, price, change, percent));
+            Stock stock = new Stock("", symbol, price, change, percent);
+            return stock;
 
             /*
 
@@ -125,7 +126,7 @@ public class AsyncFinancialDataLoader extends AsyncTask<String,Integer,String> {
 
             }
             */
-            return stocksList;
+            //return stocksList;
         } catch (Exception e) {
             Log.d(TAG, "parseJSON: " + e.getMessage());
             e.printStackTrace();
