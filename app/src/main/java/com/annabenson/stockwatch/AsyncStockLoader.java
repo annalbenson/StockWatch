@@ -32,7 +32,7 @@ public class AsyncStockLoader extends AsyncTask<String,Integer,String> {
 
     @Override
     protected void onPreExecute(){
-        //Toast.makeText(mainActivity, "Loading Stock Data...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(mainActivity, "Loading Stock Data...", Toast.LENGTH_SHORT).show();
     }
 
     @Override

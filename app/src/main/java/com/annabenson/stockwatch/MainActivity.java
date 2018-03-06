@@ -1,7 +1,10 @@
 package com.annabenson.stockwatch;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
@@ -32,17 +35,11 @@ public class MainActivity extends AppCompatActivity
 
     //private TextView textView;
     private SwipeRefreshLayout swiper;
-    private boolean on;
-
     private static final String TAG = "MainActivity";
     private RecyclerView rV;
     private List<Stock> stocksList = new ArrayList<>();
     private RecyclerViewAdapter rVAdapter;
-
-    private static final int ADD_CODE = 1;
-    private static final int UPDATE_CODE = 2;
     private DatabaseHandler databaseHandler;
-
     private MainActivity mainActivity = this;
 
     @Override
@@ -50,90 +47,75 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // recycler view
-        rV = findViewById(R.id.recycler);
-        rVAdapter = new RecyclerViewAdapter(stocksList, this);
-        rV.setAdapter(rVAdapter);
-        rV.setLayoutManager(new LinearLayoutManager(this));
 
 
-        databaseHandler = new DatabaseHandler(this);
-        databaseHandler.deleteStock("CAIBX");
-        databaseHandler.deleteStock("CAIFX");
-
-        // swipe to refresh
-        //textView = (TextView) findViewById(R.id.textView);
-        //textView.setText("Is this thing on? ");
-        swiper = findViewById(R.id.swiper);
-        //on = false;
+            // recycler view
+            rV = findViewById(R.id.recycler);
+            rVAdapter = new RecyclerViewAdapter(stocksList, this);
+            rV.setAdapter(rVAdapter);
+            rV.setLayoutManager(new LinearLayoutManager(this));
+            databaseHandler = new DatabaseHandler(this);
+            swiper = findViewById(R.id.swiper);
 
 
-        swiper.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
+            swiper.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+                @Override
+                public void onRefresh() {
+                    if (connected()) {
 
-                ArrayList<Stock> list = databaseHandler.loadStocks();
-                stocksList.clear();
-                for(int i = 0; i < list.size(); i ++){
 
-                    String symbol = list.get(i).getSymbol();
-                    String name = list.get(i).getName();
-                    new AsyncFinancialDataLoader(mainActivity).execute(symbol);
+                        ArrayList<Stock> list = databaseHandler.loadStocks();
+                        stocksList.clear();
+                        for (int i = 0; i < list.size(); i++) {
+                            String symbol = list.get(i).getSymbol();
+                            String name = list.get(i).getName();
+                            new AsyncFinancialDataLoader(mainActivity).execute(symbol);
+                        }
+                        rVAdapter.notifyDataSetChanged();
+                        swiper.setRefreshing(false);
+                    } else {
+                        noNetDialogRefresh();
+                        swiper.setRefreshing(false);
+                    }
                 }
+            });
 
-                rVAdapter.notifyDataSetChanged();
-
-                swiper.setRefreshing(false);
-            }
-        });
-
-
-        //databaseHandler.shutDown();
-
-        //new AsyncStockLoader(this).execute();
-
-        /*
-        databaseHandler.addStock( new Stock("Apple Inc.", "AAPL", 135.72,0.38,0.28));
-        databaseHandler.addStock( new Stock("Amazon.com Inc.", "AMZN", 845.09,0.93,0.11));
-
-        // 1e) Dummy data
-        for(int i = 2; i < 10; i ++){
-            databaseHandler.addStock(new Stock("Company" + i, "SYMB" + i, i*10,i*100, i / 100.0 ));
-        }
-        rVAdapter.notifyDataSetChanged();
-        */
-        //new AsyncStockLoader(this).execute();
-
-    }
+    }// end onCreate
 
     @Override
     protected void onResume(){
 
-        databaseHandler.dumpDbToLog();
-        ArrayList<Stock> list = databaseHandler.loadStocks();
+        if(connected()) {
 
-        // download stock data and build stock object and add to stocksList
 
-        stocksList.clear();
+            databaseHandler.dumpDbToLog();
+            ArrayList<Stock> list = databaseHandler.loadStocks();
 
-        //new AsyncFinancialDataLoader(mainActivity).execute("AMZN");
+            // download stock data and build stock object and add to stocksList
 
-        for(int i = 0; i < list.size(); i ++){
+            stocksList.clear();
 
-            String symbol = list.get(i).getSymbol();
-            String name = list.get(i).getName();
-            new AsyncFinancialDataLoader(mainActivity).execute(symbol);
-            //stocksList.get(i).setName(name);
+            //new AsyncFinancialDataLoader(mainActivity).execute("AMZN");
 
+            for (int i = 0; i < list.size(); i++) {
+
+                String symbol = list.get(i).getSymbol();
+                String name = list.get(i).getName();
+                new AsyncFinancialDataLoader(mainActivity).execute(symbol);
+                //stocksList.get(i).setName(name);
+
+            }
+
+
+            //stocksList.addAll(list);
+            //Log.d(TAG, "onResume: " + list);
+
+            // after for loop
+            rVAdapter.notifyDataSetChanged();
         }
-
-
-        //stocksList.addAll(list);
-        //Log.d(TAG, "onResume: " + list);
-
-        // after for loop
-        rVAdapter.notifyDataSetChanged();
-
+        else{
+            noNetDialogRefresh();
+        }
         // Call super last
         super.onResume();
     }
@@ -141,8 +123,17 @@ public class MainActivity extends AppCompatActivity
     protected void addNewStock(Stock stock){
         // called by async fin data load
 
+        Log.d(TAG, "addNewStock: " + stock.getSymbol());
         // get name from dummy list in onResume maybe?
         //stock.setName();
+        ArrayList<Stock> list = databaseHandler.loadStocks();
+
+        for(int i = 0; i < list.size(); i ++){
+            if(list.get(i).getSymbol().equals( stock.getSymbol())){
+                stock.setName( list.get(i).getName());
+            }
+        }
+
         stocksList.add(stock);
         rVAdapter.notifyDataSetChanged();
     }
@@ -164,7 +155,12 @@ public class MainActivity extends AppCompatActivity
         switch(item.getItemId()){
             case R.id.addStock:
                 //String s = "";
-                addStockDialog();
+                if( connected() ){
+                    addStockDialog();
+                }
+                else{
+                    noNetDialogAdd();
+                }
                 //Toast.makeText(this, "You want to add a Stock", Toast.LENGTH_SHORT).show();
                 return true;
             default:
@@ -172,9 +168,62 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    public void onClick(View v) {
+        //Toast.makeText(v.getContext(), "SHORT" , Toast.LENGTH_SHORT).show();
+
+        // open the browser to the stock's Market Watch site
+
+        int pos = rV.getChildLayoutPosition(v);
+        Stock s = stocksList.get(pos);
+
+        String symbol = s.getSymbol();
+        String url = "http://www.marketwatch.com/investing/stock/" + symbol;
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        startActivity(intent);
+
+        // update code passed
+        //return;
+    }
+
+    @Override
+    public boolean onLongClick(View v){
+        //Toast.makeText(v.getContext(), "LONG" , Toast.LENGTH_SHORT).show();
+        int pos = rV.getChildLayoutPosition(v);
+        Stock s = stocksList.get(pos);
+
+        //Dialog to check if want to delete
+        deleteDialog(pos, s);
+
+        return false;
+    }
+
+    // network checkers
+
+    private boolean connected(){
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo netInfo = cm.getActiveNetworkInfo();
+        return netInfo != null && netInfo.isConnectedOrConnecting();
+    }
+    public void noNetDialogAdd(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Stocks Cannot Be Added Without A Network Connection");
+        builder.setTitle("No Network Connection");
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    public void noNetDialogRefresh(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Stocks Cannot Be Updated Without A Network Connection");
+        builder.setTitle("No Network Connection");
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
     public void addStockDialog(){
-        // 06/18
-        // Symbol Entry Dialog
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         Log.d("addStockDialog", "addStockDialog called:");
@@ -237,7 +286,7 @@ public class MainActivity extends AppCompatActivity
 
     public void notFoundDialog(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        //builder.setMessage("Data for stock symbol");
+        builder.setMessage("Data for stock symbol");
         builder.setTitle("Stock Symbol Not Found");
 
 
@@ -277,57 +326,6 @@ public class MainActivity extends AppCompatActivity
         AlertDialog dialog = builder.create();
         dialog.show();
 
-    }
-
-    /*
-    public void getFinancialData(ArrayList<Stock> sList){
-
-        String symbol = sList.get(0).getSymbol();
-        new AsyncFinancialDataLoader(mainActivity).execute(symbol);
-    }
-    */
-
-    /*
-    public void addFinancialData(ArrayList<Stock> sList){
-
-
-        //stocksList.get()
-
-
-        //updateData(sList);
-    }
-    */
-
-    @Override
-    public void onClick(View v) {
-        //Toast.makeText(v.getContext(), "SHORT" , Toast.LENGTH_SHORT).show();
-
-        // open the browser to the stock's Market Watch site
-
-        int pos = rV.getChildLayoutPosition(v);
-        Stock s = stocksList.get(pos);
-
-        String symbol = s.getSymbol();
-        String url = "http://www.marketwatch.com/investing/stock/" + symbol;
-
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(Uri.parse(url));
-        startActivity(intent);
-
-        // update code passed
-        //return;
-    }
-
-    @Override
-    public boolean onLongClick(View v){
-        //Toast.makeText(v.getContext(), "LONG" , Toast.LENGTH_SHORT).show();
-        int pos = rV.getChildLayoutPosition(v);
-        Stock s = stocksList.get(pos);
-
-        //Dialog to check if want to delete
-        deleteDialog(pos, s);
-
-        return false;
     }
 
     public void deleteDialog(int pos, Stock s){
