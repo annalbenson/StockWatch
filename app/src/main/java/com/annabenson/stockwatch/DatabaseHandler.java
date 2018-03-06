@@ -44,7 +44,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     }
 
     @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVerson, int newVersion){}
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){}
 
     public ArrayList<Stock> loadStocks(){
 
@@ -64,7 +64,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
             for(int i = 0; i < cursor.getCount(); i ++){
                 String symbol = cursor.getString(0);
                 String company = cursor.getString(1);
-                Stock s = new Stock(symbol, company);
+                Stock s = new Stock( company, symbol);
                 stocks.add(s);
                 cursor.moveToNext();
             }
@@ -82,6 +82,17 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         values.put(COMPANY, stock.getName());
         long key = database.insert(TABLE_NAME, null, values);
         Log.d(TAG, "addStock: Add Complete" );
+    }
+
+    public void addAll(ArrayList<Stock> sList) {
+        for(int i = 0; i < sList.size(); i++){
+            Stock stock = sList.get(i);
+            ContentValues values = new ContentValues();
+
+            values.put(SYMBOL, stock.getSymbol());
+            values.put(COMPANY, stock.getName());
+            long key = database.insert(TABLE_NAME, null, values);
+        }
     }
 
     /*

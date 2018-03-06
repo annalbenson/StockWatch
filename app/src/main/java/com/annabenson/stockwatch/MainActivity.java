@@ -2,6 +2,7 @@ package com.annabenson.stockwatch;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -15,6 +16,7 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -67,15 +69,20 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
+        new AsyncStockLoader(this).execute();
 
-        stocksList.add(0, new Stock("Apple Inc.", "AAPL", 135.72,0.38,0.28));
-        stocksList.add(1, new Stock("Amazon.com Inc.", "AMZN", 845.09,0.93,0.11));
+        /*
+        databaseHandler.addStock( new Stock("Apple Inc.", "AAPL", 135.72,0.38,0.28));
+        databaseHandler.addStock( new Stock("Amazon.com Inc.", "AMZN", 845.09,0.93,0.11));
 
         // 1e) Dummy data
         for(int i = 2; i < 10; i ++){
-            stocksList.add(i, new Stock("Company" + i, "SYMB" + i, i*10,i*100, i / 100.0 ));
+            databaseHandler.addStock(new Stock("Company" + i, "SYMB" + i, i*10,i*100, i / 100.0 ));
         }
         rVAdapter.notifyDataSetChanged();
+        */
+        //new AsyncStockLoader(this).execute();
+
     }
 
     @Override
@@ -135,6 +142,7 @@ public class MainActivity extends AppCompatActivity
             public void onClick(DialogInterface dialogInterface, int i) {
                 Log.d("addStockDialog", "positive clicked");
                 String s = et.getText().toString();
+
                 // add code
                 //return;
             }
@@ -162,7 +170,13 @@ public class MainActivity extends AppCompatActivity
 
         int pos = rV.getChildLayoutPosition(v);
         Stock s = stocksList.get(pos);
-        //Intent intent = new Intent
+
+        String symbol = s.getSymbol();
+        String url = "http://www.marketwatch.com/investing/stock/" + symbol;
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setData(Uri.parse(url));
+        startActivity(intent);
 
         // update code passed
         //return;
@@ -210,6 +224,18 @@ public class MainActivity extends AppCompatActivity
         dialog.show();
     }
 
+    public void updateData(ArrayList<Stock> sList) {
+        if(sList != null){
+            // add new stock to the database
+            databaseHandler.addAll(sList);
+            // refresh recyclerview
+            ArrayList<Stock> list = databaseHandler.loadStocks();
+            stocksList.clear();
+            stocksList.addAll(list);
+            //stocksList.addAll(sList);
+            //rVAdapter.notifyDataSetChanged();
+        }
 
+    }
 
 }
