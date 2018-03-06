@@ -95,13 +95,39 @@ public class MainActivity extends AppCompatActivity
 
         databaseHandler.dumpDbToLog();
         ArrayList<Stock> list = databaseHandler.loadStocks();
+
+        // download stock data and build stock object and add to stocksList
+
         stocksList.clear();
-        stocksList.addAll(list);
-        Log.d(TAG, "onResume: " + list);
+
+        for(int i = 0; i < list.size(); i ++){
+
+            String symbol = list.get(i).getSymbol();
+            String name = list.get(i).getName();
+            new AsyncFinancialDataLoader(mainActivity).execute(symbol,name);
+
+        }
+
+
+        //stocksList.addAll(list);
+        //Log.d(TAG, "onResume: " + list);
+
+        // after for loop
         rVAdapter.notifyDataSetChanged();
 
         // Call super last
         super.onResume();
+    }
+
+    protected void addNewStock(ArrayList<Stock> sList){
+        // called by async fin data load
+
+        Stock stock = sList.get(0);
+
+        // get name from dummy list in onResume maybe?
+        //stock.setName();
+        stocksList.add(stock);
+
     }
 
     @Override
@@ -217,6 +243,7 @@ public class MainActivity extends AppCompatActivity
             public void onClick(DialogInterface dialogInterface, int which) {
                 ArrayList<Stock> selected = new ArrayList<>();
                 selected.add(sList.get(which));
+                //mainActivity.getFinancialData(selected);
                 updateData(selected);
             }
         });
@@ -231,6 +258,23 @@ public class MainActivity extends AppCompatActivity
         dialog.show();
 
     }
+
+    public void getFinancialData(ArrayList<Stock> sList){
+
+        String symbol = sList.get(0).getSymbol();
+        new AsyncFinancialDataLoader(mainActivity).execute(symbol);
+    }
+
+    /*
+    public void addFinancialData(ArrayList<Stock> sList){
+
+
+        //stocksList.get()
+
+
+        //updateData(sList);
+    }
+    */
 
     @Override
     public void onClick(View v) {

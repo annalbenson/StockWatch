@@ -22,6 +22,8 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     private static final String TABLE_NAME = "StockWatchTable";
     private static final String SYMBOL = "StockSymbol";
     private static final String COMPANY = "CompanyName";
+    //private static final String PRICE = "StockSymbol";
+    //private static final String COMPANY = "CompanyName"
 
     // Create Code
     private static final String SQL_CREATE_TABLE =
@@ -100,10 +102,16 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         }
     }
 
-    /*
-    public void updateStock(Stock stock){
+
+    /*public void updateStock(Stock stock){
         Log.d(TAG, "updateStock: Updating" + stock.getSymbol());
         ContentValues values = new ContentValues();
+
+        values.put(SYMBOL, stock.getSymbol());
+        values.put(PRICE, stock.getPrice());
+        values.put(CHANGE, stock.getChange());
+        values.put(PERCENT, stock.getPercent());
+
 
         values.put()
     }
