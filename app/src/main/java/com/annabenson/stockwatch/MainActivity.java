@@ -25,6 +25,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS;
@@ -71,6 +72,7 @@ public class MainActivity extends AppCompatActivity
                             String name = list.get(i).getName();
                             new AsyncFinancialDataLoader(mainActivity).execute(symbol);
                         }
+                        Collections.sort(stocksList);
                         rVAdapter.notifyDataSetChanged();
                         swiper.setRefreshing(false);
                     } else {
@@ -111,6 +113,7 @@ public class MainActivity extends AppCompatActivity
             //Log.d(TAG, "onResume: " + list);
 
             // after for loop
+            Collections.sort(stocksList);
             rVAdapter.notifyDataSetChanged();
         }
         else{
@@ -135,6 +138,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         stocksList.add(stock);
+        Collections.sort(stocksList);
         rVAdapter.notifyDataSetChanged();
     }
 
@@ -392,7 +396,7 @@ public class MainActivity extends AppCompatActivity
 
 
 
-
+            Collections.sort(stocksList);
             rVAdapter.notifyDataSetChanged();
 
         }

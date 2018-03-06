@@ -4,7 +4,7 @@ package com.annabenson.stockwatch;
  * Created by Anna on 2/20/2018.
  */
 
-public class Stock {
+public class Stock implements Comparable<Stock> {
 
     // 4/10
     private String name;
@@ -75,5 +75,13 @@ public class Stock {
                 ", change=" + change +
                 ", percent=" + percent +
                 '}';
+    }
+
+    @Override
+    public int compareTo(Stock that){
+        // Alphabetical sort by Symbol
+        // Will be negative if earlier in alphabet, and vv
+
+        return this.getSymbol().compareTo( that.getSymbol() );
     }
 }
