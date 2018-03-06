@@ -42,6 +42,11 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         Log.d(TAG, "onCreate: Making New DB");
         db.execSQL(SQL_CREATE_TABLE);
     }
+    /*
+    public boolean isIn(String symbol){
+
+    }
+    */
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){}

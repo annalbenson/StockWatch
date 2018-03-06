@@ -40,6 +40,8 @@ public class MainActivity extends AppCompatActivity
     private static final int UPDATE_CODE = 2;
     private DatabaseHandler databaseHandler;
 
+    private MainActivity mainActivity = this;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -69,7 +71,10 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        new AsyncStockLoader(this).execute();
+
+        //databaseHandler.shutDown();
+
+        //new AsyncStockLoader(this).execute();
 
         /*
         databaseHandler.addStock( new Stock("Apple Inc.", "AAPL", 135.72,0.38,0.28));
@@ -117,7 +122,7 @@ public class MainActivity extends AppCompatActivity
             case R.id.addStock:
                 //String s = "";
                 addStockDialog();
-                Toast.makeText(this, "You want to add a Stock", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(this, "You want to add a Stock", Toast.LENGTH_SHORT).show();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -143,6 +148,27 @@ public class MainActivity extends AppCompatActivity
                 Log.d("addStockDialog", "positive clicked");
                 String s = et.getText().toString();
 
+                boolean in = false;
+                for(int j = 0; j < stocksList.size() ;j++){
+                    String symb = stocksList.get(j).getSymbol();
+                    if(symb.equals(s)){in = true;}
+                }
+                if(in){
+                    // Duplicate
+                    mainActivity.duplicateDialog(s);
+                }
+                else {
+                    // Not duplicate
+                    String[] sArr = {s};
+                    new AsyncStockLoader(mainActivity).execute(sArr);
+                }
+
+
+                // Pop up list dialog
+
+                // user selects
+
+
                 // add code
                 //return;
             }
@@ -162,9 +188,53 @@ public class MainActivity extends AppCompatActivity
         dialog.show();
     }
 
+    public void duplicateDialog(String symb){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Stock Symbol " + symb + " is already displayed");
+        builder.setTitle("Duplicate Stock");
+        // NEED: exclamation icon
+        //builder.setIcon();
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    public void stockSelect(ArrayList<Stock> s){
+        // list select dialog, user chooses stock and it's sent to updateData
+
+        final ArrayList<Stock> sList = s;
+
+        final CharSequence[] sArray = new CharSequence[sList.size()];
+        for(int i = 0; i < sList.size(); i++){
+            sArray[i] = sList.get(i).getSymbol() + " - " + sList.get(i).getName();
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Make a selection");
+
+        builder.setItems(sArray, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int which) {
+                ArrayList<Stock> selected = new ArrayList<>();
+                selected.add(sList.get(which));
+                updateData(selected);
+            }
+        });
+        builder.setNegativeButton("Nevermind", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialogInterface, int i) {
+                // do nothing, return
+            }
+        });
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+    }
+
     @Override
     public void onClick(View v) {
-        Toast.makeText(v.getContext(), "SHORT" , Toast.LENGTH_SHORT).show();
+        //Toast.makeText(v.getContext(), "SHORT" , Toast.LENGTH_SHORT).show();
 
         // open the browser to the stock's Market Watch site
 
@@ -184,7 +254,7 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public boolean onLongClick(View v){
-        Toast.makeText(v.getContext(), "LONG" , Toast.LENGTH_SHORT).show();
+        //Toast.makeText(v.getContext(), "LONG" , Toast.LENGTH_SHORT).show();
         int pos = rV.getChildLayoutPosition(v);
         Stock s = stocksList.get(pos);
 
@@ -204,7 +274,8 @@ public class MainActivity extends AppCompatActivity
         builder.setPositiveButton("Delete", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
-                // delete stock from list
+                // delete from DB, delete from list, notify Adapter
+                databaseHandler.deleteStock(stocksList.get(pos2).getSymbol());
                 stocksList.remove(pos2);
                 rVAdapter.notifyDataSetChanged();
                 //return;
@@ -233,7 +304,7 @@ public class MainActivity extends AppCompatActivity
             stocksList.clear();
             stocksList.addAll(list);
             //stocksList.addAll(sList);
-            //rVAdapter.notifyDataSetChanged();
+            rVAdapter.notifyDataSetChanged();
         }
 
     }

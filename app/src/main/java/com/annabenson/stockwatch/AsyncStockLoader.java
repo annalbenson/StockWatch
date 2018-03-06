@@ -24,7 +24,8 @@ public class AsyncStockLoader extends AsyncTask<String,Integer,String> {
     private MainActivity mainActivity;
     private int count;
 
-    private final String dataURL = "http://d.yimg.com/aq/autoc?region=US&lang=en-US&query=CAI";
+    //private final String dataURL = "http://d.yimg.com/aq/autoc?region=US&lang=en-US&query=CAI";
+    private final String dataURLStem = "http://d.yimg.com/aq/autoc?region=US&lang=en-US&query=";
     private static final String TAG = "AsyncStockLoader";
 
     public AsyncStockLoader(MainActivity ma){ mainActivity = ma;}
@@ -41,12 +42,15 @@ public class AsyncStockLoader extends AsyncTask<String,Integer,String> {
         String n = x.getName();
         Log.d(TAG, "onPostExecute: loaded" + n);
         Toast.makeText(mainActivity, "Loaded " + stocksList.size() + " stocks.", Toast.LENGTH_SHORT).show();
-        mainActivity.updateData(stocksList);
+        mainActivity.stockSelect(stocksList);
+        //mainActivity.updateData(stocksList);
     }
 
     @Override
     protected String doInBackground(String... params) {
 
+        String dataURL = dataURLStem + params[0];
+        Log.d(TAG, "doInBackground: URL is " + dataURL);
         Uri dataUri = Uri.parse(dataURL);
         String urlToUse = dataUri.toString();
         Log.d(TAG, "doInBackground: " + urlToUse);
@@ -92,15 +96,21 @@ public class AsyncStockLoader extends AsyncTask<String,Integer,String> {
 
             for (int i = 0; i < jObjMain.length(); i++) {
                 JSONObject jStock = (JSONObject) jObjMain.get(i);
-                String symbol = jStock.getString("symbol");
-                String name = jStock.getString("name");
+                String type = jStock.getString("type");
+                if( type.equals("S")  ){
+                    // so only get Stocks
+                    String symbol = jStock.getString("symbol");
+                    String name = jStock.getString("name");
+                    Log.d(TAG, "parseJSON: loaded " + name + ", " + symbol);
+                    stocksList.add(new Stock(name, symbol));
+                }
+
                 //String exch = jStock.getString("exch");
                 //String type = jStock.getString("type");
                 //String exchDisp = jStock.getString("exchDisp");
                 //String typeDisp = jStock.getString("typeDisp");
 
-                Log.d(TAG, "parseJSON: loaded " + name + ", " + symbol);
-                stocksList.add(new Stock(name, symbol));
+
             }
             return stocksList;
         } catch (Exception e) {
