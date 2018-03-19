@@ -34,6 +34,8 @@ import static android.text.InputType.TYPE_TEXT_FLAG_CAP_WORDS;
 public class MainActivity extends AppCompatActivity
         implements View.OnClickListener, View.OnLongClickListener {
 
+    // TEST TEST 1234 3/19/18
+
     //private TextView textView;
     private SwipeRefreshLayout swiper;
     private static final String TAG = "MainActivity";
