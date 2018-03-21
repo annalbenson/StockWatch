@@ -108,8 +108,17 @@ public class AsyncStockLoader extends AsyncTask<String,Integer,String> {
                     // so only get Stocks
                     String symbol = jStock.getString("symbol");
                     String name = jStock.getString("name");
-                    Log.d(TAG, "parseJSON: loaded " + name + ", " + symbol);
-                    stocksList.add(new Stock(name, symbol));
+
+                    // 3/21 changes
+                    int idx = symbol.indexOf('.'); // to check for the character
+                    if(idx >= 0){ // '.' is in symbol, ignore stock
+                        Log.d(TAG, "parseJSON: ignored " + name + ", " + symbol);
+                    }
+                    else{ // '.' not in symbol, accept stock
+                        Log.d(TAG, "parseJSON: loaded " + name + ", " + symbol);
+                        stocksList.add(new Stock(name, symbol));
+                    }
+
                 }
 
                 //String exch = jStock.getString("exch");

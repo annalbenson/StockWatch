@@ -36,6 +36,9 @@ public class MainActivity extends AppCompatActivity
 
     // TEST TEST 1234 3/19/18
 
+    // 3/21: Checked pdf vis a vi grading and saw that should have excluded stocks with periods
+        //on brief inspection stocks with periods crash the app so that's a problem
+
     //private TextView textView;
     private SwipeRefreshLayout swiper;
     private static final String TAG = "MainActivity";
