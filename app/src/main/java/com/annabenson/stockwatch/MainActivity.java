@@ -242,7 +242,7 @@ public class MainActivity extends AppCompatActivity
         et.setGravity(Gravity.CENTER_HORIZONTAL);
 
         builder.setView(et);
-        builder.setIcon(R.drawable.ic_launcher_background);// change later
+
 
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
