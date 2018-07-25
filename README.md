@@ -6,7 +6,7 @@ Description
 
 Installation
 - USB Cable
-- Android device with minimum sdk of 21
+- Android device or emulator with minimum SDK 21
 - Android Studio or equivalent IDE
 
 
