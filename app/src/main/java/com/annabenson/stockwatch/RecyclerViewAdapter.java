@@ -43,7 +43,7 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<MyViewHolder>{
         Stock stock = stocksList.get(position);
         holder.name.setText(stock.getName());
         holder.symbol.setText(stock.getSymbol());
-        holder.price.setText(String.format("%s",stock.getPrice()));
+        holder.price.setText(String.format("$%s",stock.getPrice()));
         holder.change.setText(String.format("%.2f (%.2f%%)", stock.getChange(), stock.getPercent()));
         if(stock.getChange() >= 0){
             // green
