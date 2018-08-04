@@ -2,19 +2,16 @@
 
 <b>Description</b>
 - At-a-glance stock tracking app using data from Market Watch (https://www.marketwatch.com/)
-- 
 
 <b>Installation</b>
 - USB Cable
 - Android device or emulator with minimum SDK 21
 - Android Studio or equivalent IDE
 
-
 <b>Usage</b>
 
-
 <div class="row">
-    <p>Upon app installation and initial launch there will be no entires in the list but after adding a few it may look like this:
+    <p>Upon app installation and initial launch there will be no entires in the list but after adding a few it may look like this. The Symbol and company name are on the left, the middle is the current price, and the right is the price change and the change percentage in parentheses.
     </p>
     <p align="center" >
       <img src="https://github.com/annalbenson/StockWatch/blob/master/screenshots/main_act.png" height="400" >
@@ -36,6 +33,10 @@
   <p>Back in the app, if you'd like to delete a stock entry, long clicking on it opens a delete dialog</p>
   <p align="center" >
       <img src="https://github.com/annalbenson/StockWatch/blob/master/screenshots/delete_dialog.png" height="400" >
+    </p>
+  <p>The app stores Company Names and Symbols in an SQLite database and then loads the most recent stock data upon opening the app. As such, if you try to open the app or refresh the app with no internet connection an error dialog will fire.</p>
+    <p align="center" >
+      <img src="https://github.com/annalbenson/StockWatch/blob/master/screenshots/no_net_dialog.png" height="400" >
     </p>
 </div>
 
