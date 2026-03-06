@@ -3,7 +3,6 @@ package com.annabenson.stockwatch;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.Toast;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -22,41 +21,31 @@ import java.util.ArrayList;
 public class AsyncFinancialDataLoader extends AsyncTask<String,Integer,String> {
 
     private MainActivity mainActivity;
-    private int count;
 
-    private final String dataURLPrefix = "https://api.iextrading.com/1.0/stock/";
-    private final String getDataURLSuffix = "/quote";
+    private final String dataURLPrefix = "https://query1.finance.yahoo.com/v8/finance/chart/";
     private static final String TAG = "AsyncFinDataLoader";
 
     public AsyncFinancialDataLoader(MainActivity ma){ mainActivity = ma;}
 
+    // No setup needed before the background fetch
     @Override
-    protected void onPreExecute(){
-        //Toast.makeText(mainActivity, "Loading Financial Data...", Toast.LENGTH_SHORT).show();
-    }
+    protected void onPreExecute(){ }
 
+    // Passes the parsed stock back to MainActivity to add to the displayed list
     @Override
     protected void onPostExecute(String s) {
         Stock stock = parseJSON(s);
-        //Stock x = stocksList.get(0);
-        //String n = x.getName();
-        //Log.d(TAG, "onPostExecute: loaded" + n);
-        //Toast.makeText(mainActivity, "Loaded " + stocksList.size() + " stocks.", Toast.LENGTH_SHORT).show();
-        //mainActivity.stockSelect(stocksList);
-        //mainActivity.updateData(stocksList);
-
         mainActivity.addNewStock(stock);
-        // call something to add new data to existing data
     }
 
+    // Fetches price data from the Yahoo Finance chart API for the given stock symbol
     @Override
     protected String doInBackground(String... params) {
 
-        String dataURL = dataURLPrefix + params[0] + getDataURLSuffix;
+        String dataURL = dataURLPrefix + params[0].toUpperCase();
         Log.d(TAG, "doInBackground: URL is " + dataURL);
         Uri dataUri = Uri.parse(dataURL);
         String urlToUse = dataUri.toString();
-        Log.d(TAG, "doInBackground: " + urlToUse);
 
         StringBuilder sb = new StringBuilder();
         try {
@@ -64,6 +53,9 @@ public class AsyncFinancialDataLoader extends AsyncTask<String,Integer,String> {
 
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
             InputStream is = conn.getInputStream();
             BufferedReader reader = new BufferedReader((new InputStreamReader(is)));
 
@@ -79,54 +71,35 @@ public class AsyncFinancialDataLoader extends AsyncTask<String,Integer,String> {
             return null;
         }
 
-        Log.d(TAG, "doInBackground: " + sb.toString());
-        Log.d(TAG, "doInBackground: returning");
         return sb.toString();
     }
 
+    // Parses the chart API response and returns a Stock with price and change data;
+    // calculates change from previous close if the API omits the change fields
     private Stock parseJSON(String s) {
 
         Log.d(TAG, "parseJSON: started JSON");
 
-        ArrayList<Stock> stocksList = new ArrayList<>();
         try {
-            JSONObject jStock = new JSONObject(s); // {}
-            //JSONObject jObjMain2 = jObjMain3.getJSONObject("ResultSet");
-            //JSONArray jObjMain = jObjMain2.getJSONArray("Result");
-            //count = jObjMain.length();
+            JSONObject root = new JSONObject(s);
+            JSONObject chart = root.getJSONObject("chart");
+            JSONArray results = chart.getJSONArray("result");
+            JSONObject meta = results.getJSONObject(0).getJSONObject("meta");
 
-            //String symbol = jStock.getString("symbol");
-            //if(
+            String symbol = meta.getString("symbol");
+            double price = meta.getDouble("regularMarketPrice");
+            double change = meta.optDouble("regularMarketChange", Double.NaN);
+            double percent = meta.optDouble("regularMarketChangePercent", Double.NaN);
 
-            String symbol = jStock.getString("symbol");
-            double price = Double.parseDouble (jStock.getString("latestPrice"));
-            double change = Double.parseDouble (jStock.getString("change"));
-            double percent = Double.parseDouble (jStock.getString("changePercent"));
-            Stock stock = new Stock("", symbol, price, change, percent);
-            return stock;
-
-            /*
-
-            for (int i = 0; i < jObjMain.length(); i++) {
-                JSONObject jStock = (JSONObject) jObjMain.get(i);
-                String type = jStock.getString("type");
-                if( type.equals("S")  ){
-                    // so only get Stocks
-                    String symbol = jStock.getString("symbol");
-                    String name = jStock.getString("name");
-                    Log.d(TAG, "parseJSON: loaded " + name + ", " + symbol);
-                    stocksList.add(new Stock(name, symbol));
-                }
-
-                //String exch = jStock.getString("exch");
-                //String type = jStock.getString("type");
-                //String exchDisp = jStock.getString("exchDisp");
-                //String typeDisp = jStock.getString("typeDisp");
-
-
+            if (Double.isNaN(change)) {
+                double prevClose = meta.optDouble("chartPreviousClose", meta.optDouble("previousClose", price));
+                change = price - prevClose;
+                percent = prevClose != 0 ? (change / prevClose) * 100 : 0;
+                Log.d(TAG, "parseJSON: calculated change=" + change + " percent=" + percent);
             }
-            */
-            //return stocksList;
+
+            return new Stock("", symbol, price, change, percent);
+
         } catch (Exception e) {
             Log.d(TAG, "parseJSON: " + e.getMessage());
             e.printStackTrace();

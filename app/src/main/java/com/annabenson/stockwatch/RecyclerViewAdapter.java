@@ -32,7 +32,6 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<MyViewHolder>{
                 .inflate(R.layout.stock_list_row, parent, false);
 
         itemView.setOnClickListener(mainAct);
-        itemView.setOnLongClickListener(mainAct);
 
         return new MyViewHolder(itemView);
 

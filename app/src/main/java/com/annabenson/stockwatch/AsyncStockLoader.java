@@ -24,43 +24,37 @@ public class AsyncStockLoader extends AsyncTask<String,Integer,String> {
     private MainActivity mainActivity;
     private int count;
 
-    //private final String dataURL = "http://d.yimg.com/aq/autoc?region=US&lang=en-US&query=CAI";
-    private final String dataURLStem = "http://d.yimg.com/aq/autoc?region=US&lang=en-US&query=";
+    private final String dataURLStem = "https://query1.finance.yahoo.com/v1/finance/search?lang=en-US&region=US&quotesCount=10&newsCount=0&q=";
     private static final String TAG = "AsyncStockLoader";
 
     public AsyncStockLoader(MainActivity ma){ mainActivity = ma;}
 
+    // Shows a toast while the search request is in flight
     @Override
     protected void onPreExecute(){
         Toast.makeText(mainActivity, "Loading Stock Data...", Toast.LENGTH_SHORT).show();
     }
 
+    // Parses the search results and either shows the selection dialog or a not-found dialog
     @Override
     protected void onPostExecute(String s) {
         ArrayList<Stock> stocksList = parseJSON(s);
-        if(stocksList.size() == 0){
-            // nothing founds, call not found in MA
+        if(stocksList == null || stocksList.size() == 0){
             mainActivity.notFoundDialog();
         }
         else {
-
-            //Stock x = stocksList.get(0);
-            //String n = x.getName();
-            //Log.d(TAG, "onPostExecute: loaded" + n);
-            //Toast.makeText(mainActivity, "Loaded " + stocksList.size() + " stocks.", Toast.LENGTH_SHORT).show();
             mainActivity.stockSelect(stocksList);
-            //mainActivity.updateData(stocksList);
         }
     }
 
+    // Fetches stock search results from the Yahoo Finance search API for the given symbol query
     @Override
     protected String doInBackground(String... params) {
 
-        String dataURL = dataURLStem + params[0];
+        String dataURL = dataURLStem + params[0].toUpperCase();
         Log.d(TAG, "doInBackground: URL is " + dataURL);
         Uri dataUri = Uri.parse(dataURL);
         String urlToUse = dataUri.toString();
-        Log.d(TAG, "doInBackground: " + urlToUse);
 
         StringBuilder sb = new StringBuilder();
         try {
@@ -68,6 +62,9 @@ public class AsyncStockLoader extends AsyncTask<String,Integer,String> {
 
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(10000);
             InputStream is = conn.getInputStream();
             BufferedReader reader = new BufferedReader((new InputStreamReader(is)));
 
@@ -83,50 +80,36 @@ public class AsyncStockLoader extends AsyncTask<String,Integer,String> {
             return null;
         }
 
-        Log.d(TAG, "doInBackground: " + sb.toString());
-        Log.d(TAG, "doInBackground: returning");
         return sb.toString();
     }
 
 
+    // Parses the Yahoo Finance search response and returns a list of matching EQUITY stocks
     private ArrayList<Stock> parseJSON(String s) {
 
         Log.d(TAG, "parseJSON: started JSON");
 
-        //s = s.substring(1,s.length()); // to chop off the {} which make it look like an object rather than an array
         ArrayList<Stock> stocksList = new ArrayList<>();
         try {
-            JSONObject jObjMain3 = new JSONObject(s);
-            JSONObject jObjMain2 = jObjMain3.getJSONObject("ResultSet");
-            JSONArray jObjMain = jObjMain2.getJSONArray("Result");
-            count = jObjMain.length();
+            JSONObject jObjMain = new JSONObject(s);
+            JSONArray quotes = jObjMain.getJSONArray("quotes");
+            count = quotes.length();
 
-            for (int i = 0; i < jObjMain.length(); i++) {
-                JSONObject jStock = (JSONObject) jObjMain.get(i);
-                String type = jStock.getString("type");
-                if( type.equals("S")  ){
-                    // so only get Stocks
+            for (int i = 0; i < quotes.length(); i++) {
+                JSONObject jStock = (JSONObject) quotes.get(i);
+                String type = jStock.optString("quoteType", "");
+                if (type.equals("EQUITY")) {
                     String symbol = jStock.getString("symbol");
-                    String name = jStock.getString("name");
+                    String name = jStock.optString("shortname", jStock.optString("longname", symbol));
 
-                    // 3/21 changes
-                    int idx = symbol.indexOf('.'); // to check for the character
-                    if(idx >= 0){ // '.' is in symbol, ignore stock
+                    int idx = symbol.indexOf('.');
+                    if (idx >= 0) {
                         Log.d(TAG, "parseJSON: ignored " + name + ", " + symbol);
-                    }
-                    else{ // '.' not in symbol, accept stock
+                    } else {
                         Log.d(TAG, "parseJSON: loaded " + name + ", " + symbol);
                         stocksList.add(new Stock(name, symbol));
                     }
-
                 }
-
-                //String exch = jStock.getString("exch");
-                //String type = jStock.getString("type");
-                //String exchDisp = jStock.getString("exchDisp");
-                //String typeDisp = jStock.getString("typeDisp");
-
-
             }
             return stocksList;
         } catch (Exception e) {

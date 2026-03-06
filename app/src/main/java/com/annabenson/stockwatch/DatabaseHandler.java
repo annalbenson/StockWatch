@@ -32,12 +32,14 @@ public class DatabaseHandler extends SQLiteOpenHelper{
                     COMPANY + " TEXT not null)";
     private SQLiteDatabase database;
 
+    // Opens (or creates) the writable database
     public DatabaseHandler(Context context){
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         database = getWritableDatabase();
         Log.d(TAG, "DatabaseHandler: Creator DONE");
     }
 
+    // Called once when the database is first created; runs the CREATE TABLE statement
     @Override
     public void onCreate(SQLiteDatabase db){
         // only called if DB DNE
@@ -50,9 +52,11 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     }
     */
 
+    // Called when the database version is incremented; no migration logic currently
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){}
 
+    // Returns all saved stocks from the database as a list
     public ArrayList<Stock> loadStocks(){
 
         Log.d(TAG, "loadStocks: START");
@@ -81,16 +85,18 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         return stocks;
     }
 
+    // Inserts a single stock; silently ignores duplicates
     public void addStock(Stock stock){
         Log.d(TAG, "addStock: Adding" + stock.getSymbol());
         ContentValues values = new ContentValues();
 
         values.put(SYMBOL, stock.getSymbol());
         values.put(COMPANY, stock.getName());
-        long key = database.insert(TABLE_NAME, null, values);
+        long key = database.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
         Log.d(TAG, "addStock: Add Complete" );
     }
 
+    // Inserts a list of stocks; silently ignores any duplicates
     public void addAll(ArrayList<Stock> sList) {
         for(int i = 0; i < sList.size(); i++){
             Stock stock = sList.get(i);
@@ -98,7 +104,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
             values.put(SYMBOL, stock.getSymbol());
             values.put(COMPANY, stock.getName());
-            long key = database.insert(TABLE_NAME, null, values);
+            long key = database.insertWithOnConflict(TABLE_NAME, null, values, SQLiteDatabase.CONFLICT_IGNORE);
         }
     }
 
@@ -117,6 +123,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
     }
     */
 
+    // Deletes the stock with the given symbol from the database
     public void deleteStock(String symbol){
         Log.d(TAG, "deleteStock: " + symbol);
         int cnt = database.delete(TABLE_NAME,SYMBOL + " = ?", new String[]{symbol});
@@ -125,6 +132,7 @@ public class DatabaseHandler extends SQLiteOpenHelper{
 
 
 
+    // Logs all rows in the database table for debugging
     public void dumpDbToLog(){
         Cursor cursor = database.rawQuery("select * from " + TABLE_NAME, null);
         if (cursor != null) {
@@ -146,5 +154,6 @@ public class DatabaseHandler extends SQLiteOpenHelper{
         Log.d(TAG, "dumpDbToLog: ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
     }
 
+    // Closes the database connection
     public void shutDown() { database.close();}
 }

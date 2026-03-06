@@ -7,4 +7,10 @@
         android:icon="@android:drawable/ic_menu_add"
         android:title="@string/add"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/testConnection"
+        android:icon="@android:drawable/ic_menu_info_details"
+        android:title="Test Connection"
+        app:showAsAction="always" />
 </menu>
